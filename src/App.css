@@ -1,4 +1,18 @@
-.App {
+body {
+  background: #fff;
+}
+
+header {
+  color: #fff;
+}
+
+.table-data th, .table-data td {
+  padding: 10px 15px;
+  font-size: 14px;
+  border: 1px solid #000;
+}
+
+/* .App {
   text-align: center;
 }
 
@@ -35,4 +49,4 @@
   to {
     transform: rotate(360deg);
   }
-}
+} */
