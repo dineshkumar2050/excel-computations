@@ -9,6 +9,9 @@ import SelectMonthAndYear from './components/common/SelectMonthAndYear';
 import ExportAndDownloadCsvData from './components/common/ExportAndDownloadCsvData';
 import { filterData } from './FilterData';
 import Filter from './components/common/Filter';
+import FilterByAttributes from './components/common/FilterByAttributes';
+
+export const LabelsInfo = React.createContext(null);
 
 function App() {
   const [convertedData, setConvertedData] = useState([])
@@ -21,6 +24,7 @@ function App() {
   const [jsonData, setJsonData] = useState([]);
   const [labelData, setLabelData] = useState([]);
   const [showFilterData, setShowFilterData] = useState(false);
+  const [columnFilter, setColumnFilter] = useState('');
   const filterByIndex = 7;
   const handleChange = e => {
     e.preventDefault();
@@ -66,73 +70,78 @@ function App() {
     setDataToBeExported(resultantValuesData);
   },[selectedTags, month, year])
   return (
-    <div className="App">
-      <header className="App-header bg-dark">
-        <div className="container py-3">
-          Main Header
-        </div>        
-      </header>
-      <div className="container">
-        <div className="wrapper py-5">
-          <InputLabel labelText={'Select a file'} htmlFor={'json-file'}/>
-          <InputField
-            type="file"
-            name="json-file"
-            accept=".csv"
-            id="json-file"
-            handleChange={handleChange}
-            inputStyle={{ border: 'none', paddingLeft: 0, paddingRight: 0, width: 'auto' }}
-          />
-          <Button 
-            text="Convert and show Data"
-            handleClick={convertAndShowData}
-            type="button"            
-          />
-          <SelectMonthAndYear
-            setMonth={setMonth}
-            setYear={setYear}
-            placeholder={'MM-YYYY'}
-            value={`${month}-${year}`}
-          />
-          {
-            ((month || year) && Object.values(selectedTags).length && dataToBeExported.length && fieldstoBeExported.length) &&
-            <div className="filtered-data-button">
-              <h3>Click the button below to show and hide filtered data</h3>
-              <Button 
-                text={showFilterData ? "Hide filtered data" : "Show Filtered data"}
-                handleClick={() => setShowFilterData(!showFilterData)}
-                type="button"            
+    <LabelsInfo.Provider value={{setLabel: setColumnFilter, labelData}}>
+      <div className="App">
+        <header className="App-header bg-dark">
+          <div className="container py-3">
+            Main Header
+          </div>        
+        </header>
+        <div className="container">
+          <div className="wrapper py-5">
+            <InputLabel labelText={'Select a file'} htmlFor={'json-file'}/>
+            <InputField
+              type="file"
+              name="json-file"
+              accept=".csv"
+              id="json-file"
+              handleChange={handleChange}
+              inputStyle={{ border: 'none', paddingLeft: 0, paddingRight: 0, width: 'auto' }}
+            />
+            <Button 
+              text="Convert and show Data"
+              handleClick={convertAndShowData}
+              type="button"            
+            />
+            <SelectMonthAndYear
+              setMonth={setMonth}
+              setYear={setYear}
+              placeholder={'DD-MM-YYYY'}
+              value={`${month}-${year}`}
+            />
+            {/* <FilterByAttributes
+              // labelAttributes={labelData}
+            /> */}
+            {
+              ((month || year) && Object.values(selectedTags).length && dataToBeExported.length && fieldstoBeExported.length) &&
+              <div className="filtered-data-button">
+                <h3>Click the button below to show and hide filtered data</h3>
+                <Button 
+                  text={showFilterData ? "Hide filtered data" : "Show Filtered data"}
+                  handleClick={() => setShowFilterData(!showFilterData)}
+                  type="button"            
+                />
+              </div>
+            }
+            {
+              ((month || year) && Object.values(selectedTags).length && dataToBeExported.length && fieldstoBeExported.length) &&
+              <ExportAndDownloadCsvData
+                dataToExport={dataToBeExported}
+                fields={fieldstoBeExported}
               />
-            </div>
-          }
-          {
-            ((month || year) && Object.values(selectedTags).length && dataToBeExported.length && fieldstoBeExported.length) &&
-            <ExportAndDownloadCsvData
-              dataToExport={dataToBeExported}
-              fields={fieldstoBeExported}
+            }
+            {
+              showFilterData &&
+              <Filter 
+                labelData={fieldstoBeExported}
+                jsonData={dataToBeExported}
+                tableClass={'table-data'}            
+              />
+            }
+            <TableData
+              data={convertedData}
+              tableClass={'table-data'}
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
+              setJsonData={setJsonData}
+              setLabelData={setLabelData}
+              labelData={labelData}
+              jsonData={jsonData}
             />
-          }
-          {
-            showFilterData &&
-            <Filter 
-              labelData={fieldstoBeExported}
-              jsonData={dataToBeExported}
-              tableClass={'table-data'}            
-            />
-          }
-          <TableData
-            data={convertedData}
-            tableClass={'table-data'}
-            selectedTags={selectedTags}
-            setSelectedTags={setSelectedTags}
-            setJsonData={setJsonData}
-            setLabelData={setLabelData}
-            labelData={labelData}
-            jsonData={jsonData}
-          />
+          </div>
         </div>
       </div>
-    </div>
+    </LabelsInfo.Provider>
   );
 }
 

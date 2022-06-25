@@ -6,9 +6,9 @@ function SelectMonthAndYear({ month, setMonth, year, setYear, placeholder }) {
   const handleChange = e => {
     e.preventDefault();
     const { value } = e.target;
-    const dateContent = String(value).split('-');
+    const dateContent = String(value).split('-');    
     const monthValue = dateContent[1];
-    const yearValue = dateContent[2];
+    const yearValue = dateContent[0];
     setMonth(monthValue);
     setYear(yearValue);
   }
