@@ -1,5 +1,8 @@
 body {
   background: #fff;
+  position: relative;
+  /* height: 100vh;
+  width: 100vw; */
 }
 
 header {
@@ -12,11 +15,111 @@ header {
   border: 1px solid #000;
 }
 
-/* .App {
-  text-align: center;
+select, option {
+  width: 200px;
+  height: 40px;
+  padding: 0 10px;
 }
 
-.App-logo {
+select:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.multipleValues {
+  border: 1px solid #000;
+  border-radius: 5px;
+  padding: 15px;
+  min-height: 100px;
+  margin: 20px 0 15px 0;
+}
+
+.selectedValue {
+  color: #fff;
+  display:flex;
+  flex-wrap: wrap;
+  padding: 10px 15px;
+  border-radius: 5px;
+}
+
+.selected {
+  background-color: green;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 20px;
+  border-radius: 20px;
+  margin-right:15px;
+  margin-bottom: 10px;
+}
+
+.selectedValue .val {
+  margin-right:10px;
+}
+
+.remove-value {
+  padding: 5px 10px;
+}
+
+.grid-system {
+  display: grid;
+  grid-template-columns: 50% 50%;
+  grid-template-rows: auto;
+}
+
+.left-section {
+  grid-column-start: 1;
+  grid-column-end: 2;
+  grid-row-start: 1;
+  grid-row-end: 2;
+}
+
+.right-section {
+  grid-column-start: 2;
+  grid-column-end: 3;
+  grid-row-start: 1;
+  grid-row-end: 2;
+}
+
+.loading {
+  position: absolute;
+  background-color: #fff;
+  top: calc(100%/2);
+  left: 50%;
+  padding: 40px 20px;
+  color: red;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  box-shadow: 0 0 5px #f4f4f4;
+  border-radius: 8px;
+}
+
+.loading-wrapper {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.6);
+  z-index: 1;
+}
+
+#root {
+  width: 100vw;
+}
+
+ .App {
+  /* text-align: center; */
+  width: 100%;
+  height: 100vh;
+}
+
+.outer-wrapper {
+  height: 100%;
+  overflow: scroll;
+}
+
+/*.App-logo {
   height: 40vmin;
   pointer-events: none;
 }

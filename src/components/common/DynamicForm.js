@@ -1,4 +1,4 @@
-import React,{ useState, useEffect } from 'react'
+import React,{ useState, useEffect, memo } from 'react'
 import PropTypes from 'prop-types'
 import InputField from './InputField'
 import Button from './Button'
@@ -104,5 +104,5 @@ DynamicForm.propTypes = {
     buttonData: PropTypes.object
 }
 
-export default DynamicForm
+export default memo(DynamicForm)
 

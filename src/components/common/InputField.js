@@ -2,11 +2,12 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 
-function InputField({ type, accept, name, value, placeholder, handleChange, inputClassName='', inputStyle={}, inputWrapperClassName='mb-3', inputWrapperStyle={}, ...props}) {
+function InputField({ type, accept, id, name, value, placeholder, handleChange, inputClassName='', inputStyle={}, inputWrapperClassName='mb-3', inputWrapperStyle={}, ...props}) {
     return (
         <Wrapper className={inputWrapperClassName} style={inputWrapperStyle}>
             <Input 
                 name={name} 
+                id={id}
                 type={type} 
                 placeholder={placeholder} 
                 onChange={handleChange}
