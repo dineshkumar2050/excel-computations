@@ -96,7 +96,7 @@ function FilterByAttributes({ dataToBeFiltered, setDataToBeFiltered }) {
                 setCurrentSelectedValue={setCurrentSelectedValue}
                 setInputValue={setInputValue}
             />
-            <InputField 
+            <InputField
                 type={(currentSelectedValue.toLowerCase().includes('month') || 
                     currentSelectedValue.toLowerCase().includes('year') ||
                     currentSelectedValue.toLowerCase().includes('date')) ? 

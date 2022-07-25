@@ -12,6 +12,17 @@ import Filter from './components/common/Filter/Filter';
 import FilterByAttributes from './components/common/FilterByAttributes';
 import FilterColumnAndData from './components/common/FilterColumnAndData';
 import Loading from './components/common/Loading';
+// import FilterWorker './components/common/web-workers/filter.worker';
+// const FilterWorker = require('./components/common/web-workers/filter.worker');
+import WithWebWorker from "./components/common/web-workers/WorkerComponent";
+import DemoWoker from "./demo.worker";
+import UniqueCompanyNamesWorker from './getUniqueCompanyNames.worker';
+import UniqueDatesWorker from './getUniqueDates.worker';
+import WebWorker from './components/common/web-workers/createScriptUrlFromFunction';
+import ColumnsInfo from './components/common/ColumnsInfo';
+import ColumnsAndIndexInfo from './components/common/ColumnAndIndexInfo'
+let CompanyNamesWorker = new WebWorker(UniqueCompanyNamesWorker);
+let DatesWorker = new WebWorker(UniqueDatesWorker);
 
 export const LabelsInfo = React.createContext(null);
 
@@ -27,7 +38,10 @@ function App() {
   const [jsonData, setJsonData] = useState([]);
   const [labelData, setLabelData] = useState([]);
   const [showFilterData, setShowFilterData] = useState(false);
-  const [dataToBeFiltered, setDataToBeFiltered] = useState({})
+  const [dataToBeFiltered, setDataToBeFiltered] = useState({});
+  const [uniqueColumnsInfo, setUniqueColumnsInfo] = useState({});
+  const [repeatingColumnInfo, setRepeatingColumnInfo] = useState({});
+  const [dateColumnInfo, setDateColumnInfo] = useState({});
   // const [columnFilter, setColumnFilter] = useState('');
   // const filterByIndex = 7;
   // useEffect(() => {
@@ -35,6 +49,18 @@ function App() {
   //     setIsLoading(false)
   //   },1500)
   // },[])
+
+  // useEffect(() => {
+    // filterWorker.onmessage = function(event) {
+    //   console.log('--event Data value through web-worker-- ->', event.data);
+    // }
+    // const worker = new Worker('./components/common/web-workers/filter.worker');
+    // worker.postMessage("start to worker");
+    // worker.onmessage = e => {
+    //   console.log("--web worker on message data-- -> ", e.data)
+    // }
+  // },[])
+
   const handleChange = e => {
     e.preventDefault();
     const { files } = e.target;
@@ -42,6 +68,7 @@ function App() {
   }
   const convertAndShowData = e => {
     e.preventDefault();
+    const startTime = Date.now()
     setIsLoading(true);
     if(csvFile) {
       Papa.parse(csvFile, {
@@ -52,7 +79,23 @@ function App() {
       })
     }
     setIsLoading(false);
+    const endTime = Date.now()
+    console.log('--time taken to convert ended in : ', (endTime - startTime)/1000, ' seconds');
   }
+  useEffect(() => {
+    if(convertedData && convertedData.length > 0 && Object.keys(uniqueColumnsInfo).length && Object.keys(dateColumnInfo).length) {
+      console.log('CompanyNamesWorker going to render');
+      CompanyNamesWorker.postMessage({ excelData: convertedData.slice(1), uniqueDataObj: uniqueColumnsInfo});
+      CompanyNamesWorker.onmessage = function (event) {
+          console.log('Message received from worker CompanyNamesWorker -> '+ event.data);
+      }
+      console.log('DatesWorker going to render');
+      DatesWorker.postMessage({ excelData: convertedData.slice(1), dateObj: dateColumnInfo });
+      DatesWorker.onmessage = function (event) {
+          console.log('Message received from worker -> '+ event.data);
+      }
+    }
+  },[convertedData, uniqueColumnsInfo, dateColumnInfo])
   useEffect(() => {
     const fieldsData = [...labelData];
     // const valuesData = [...jsonData];
@@ -63,6 +106,7 @@ function App() {
       if(Number(index+1) === Number(selectedTags[index+1])) {
         resultantFieldsData.push(field ? field : '')
       }
+      return {}
     })
     // valuesData.length > 0 && valuesData.map(value => {
     //   console.log('--values-- -> ', value);
@@ -80,11 +124,12 @@ function App() {
     // })
     setFieldsToBeExported(resultantFieldsData);
     // setDataToBeExported(resultantValuesData);
-  },[selectedTags])
+  },[labelData, selectedTags])
 
   const filterDataImplementation = useCallback((e) => {
     e.preventDefault();
     // setIsLoading(true);
+    const startTime = Date.now()
     const valuesData = [...jsonData];
     let resultantValuesData = [];
     const selectedTagsLength = Object.values(selectedTags).length;
@@ -133,13 +178,16 @@ function App() {
         //   const lastElem = new Array(selectedTagsLength).fill(null);
         //   resultantValuesData.push(lastElem);
         // }
+        return {}
       })
     } else {
       resultantValuesData = valuesData
     }
     setDataToBeExported(resultantValuesData);
+    const endTime = Date.now();
+    console.log('--time taken to process ended in : ', (endTime - startTime)/1000, ' seconds');
     // setIsLoading(false);
-  },[selectedTags, jsonData, dataToBeFiltered])
+  },[jsonData, selectedTags, dataToBeFiltered, labelData])
 
   // useEffect(() => {
   //   if(fieldstoBeExported && fieldstoBeExported.length && dataToBeExported && dataToBeExported.length && Object.values(selectedTags).length) {
@@ -152,6 +200,7 @@ function App() {
   }
   // console.log('--dataToBeExported-- -> ', dataToBeExported, selectedTags, dataToBeFiltered, fieldstoBeExported);
   // console.log('--dataToBeFiltered-- -> ', dataToBeFiltered, selectedTags, labelData, fieldstoBeExported, dataToBeExported);
+  // console.log('--convertedData-- -> ', convertedData, uniqueColumnsInfo, dateColumnInfo, repeatingColumnInfo);
   return (
     <LabelsInfo.Provider value={{setDataToBeFiltered, labelData, dataToBeFiltered, setIsLoading, selectedTags, setSelectedTags}}>
       <div className="App">
@@ -166,6 +215,8 @@ function App() {
             <div className="wrapper py-5">
               <div className="grid-system">
                 <div className="left-section">
+                  {/* <WithWebWorker /> */}
+                  {/* <DemoWoker /> */}
                   <InputLabel labelText={'Select a file'} htmlFor={'json-file'}/>
                   <InputField
                     type="file"
@@ -180,17 +231,56 @@ function App() {
                     handleClick={convertAndShowData}
                     type="button"            
                   />
+                  {
+                    convertedData && convertedData.length > 0 &&
+                    <>
+                      <ColumnsInfo 
+                        title={'Unique Columns Select'}
+                        labelText={'Select unique columns'}
+                        labelClassName={'uniqueColumnClass'}
+                        labelsData={labelData[0]}
+                        labelSetter={setUniqueColumnsInfo}
+                        labelObjValue={uniqueColumnsInfo}
+                        selectName={'uniqueColumn'}
+                        selectId={'uniqueColumn'}
+                        buttonText={'Add unique column'}
+                        multipleType={true}
+                      />
+                      <ColumnsInfo 
+                        title={'Date Column Select'}
+                        labelText={'Select date column'}
+                        labelClassName={'dateColumnClass'}
+                        labelsData={labelData[0]}
+                        labelSetter={setDateColumnInfo}
+                        labelObjValue={dateColumnInfo}
+                        selectName={'dateColumn'}
+                        selectId={'dateColumn'}
+                        buttonText={'Add date column'}
+                      />
+                      <ColumnsInfo 
+                        title={'Repeating Column Select'}
+                        labelText={'Select Repeating rendering column'}
+                        labelClassName={'repeatingColumnClass'}
+                        labelsData={labelData[0]}
+                        labelSetter={setRepeatingColumnInfo}
+                        labelObjValue={repeatingColumnInfo}
+                        selectName={'repeatingColumn'}
+                        selectId={'repeatingColumn'}
+                        buttonText={'Add repeating column'}
+                      />
+                    </>
+                  }
                   {/* <SelectMonthAndYear
                     setMonth={setMonth}
                     setYear={setYear}
                     placeholder={'DD-MM-YYYY'}
                     value={`${month}-${year}`}
                   /> */}
-                  <FilterByAttributes
+                  {/* <FilterByAttributes
                     dataToBeFiltered={dataToBeFiltered}
                     setDataToBeFiltered={setDataToBeFiltered}
                     // labelAttributes={labelData}
-                  />
+                  /> */}
                   {/* {
                     ((month || year) && Object.values(selectedTags).length && dataToBeExported.length && fieldstoBeExported.length) &&
                     <div className="filtered-data-button">
@@ -204,33 +294,38 @@ function App() {
                   } */}
                 </div>
                 <div className="right-section">
-                  <FilterColumnAndData dataToBeFiltered={dataToBeFiltered} />
+                  {/* <FilterColumnAndData dataToBeFiltered={dataToBeFiltered} /> */}
+                  <ColumnsAndIndexInfo
+                    uniqueColumnsInfo={uniqueColumnsInfo}
+                    dateColumnInfo={dateColumnInfo}
+                    repeatingColumnInfo={repeatingColumnInfo}
+                  />
                 </div>
               </div>
               {
                 // showFilterData &&
-                !!(Object.values(selectedTags).length) && !!(Object.values(dataToBeFiltered).length) && !!fieldstoBeExported.length &&
-                <Button 
-                  text={"FIlter data"}
-                  handleClick={e => {
-                    setIsLoading(true)
-                    filterDataImplementation(e)
-                    setIsLoading(false)
-                  }}
-                  type="button"
-                  style={{ margin: '20px 0' }}            
-                />
+                // !!(Object.values(selectedTags).length) && !!(Object.values(dataToBeFiltered).length) && !!fieldstoBeExported.length &&
+                // <Button 
+                //   text={"FIlter data"}
+                //   handleClick={e => {
+                //     setIsLoading(true)
+                //     filterDataImplementation(e)
+                //     setIsLoading(false)
+                //   }}
+                //   type="button"
+                //   style={{ margin: '20px 0' }}            
+                // />
               }
               {
-                !!(Object.values(selectedTags).length && !!dataToBeExported.length && !!fieldstoBeExported.length) &&
-                <div className="filtered-data-button">
-                  <h3>Click the button below to show and hide filtered data</h3>
-                  <Button 
-                    text={showFilterData ? "Hide filtered data" : "Show Filtered data"}
-                    handleClick={() => setShowFilterData(!showFilterData)}
-                    type="button"            
-                  />
-                </div>
+                // !!(Object.values(selectedTags).length && !!dataToBeExported.length && !!fieldstoBeExported.length) &&
+                // <div className="filtered-data-button">
+                //   <h3>Click the button below to show and hide filtered data</h3>
+                //   <Button 
+                //     text={showFilterData ? "Hide filtered data" : "Show Filtered data"}
+                //     handleClick={() => setShowFilterData(!showFilterData)}
+                //     type="button"            
+                //   />
+                // </div>
               }
               {
                 !!(Object.values(selectedTags).length && !!dataToBeExported.length && !!fieldstoBeExported.length) && !!showFilterData &&
