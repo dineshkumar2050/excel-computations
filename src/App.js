@@ -18,11 +18,13 @@ import WithWebWorker from "./components/common/web-workers/WorkerComponent";
 import DemoWoker from "./demo.worker";
 import UniqueCompanyNamesWorker from './getUniqueCompanyNames.worker';
 import UniqueDatesWorker from './getUniqueDates.worker';
+import ResultantData from './getResultantData.worker';
 import WebWorker from './components/common/web-workers/createScriptUrlFromFunction';
 import ColumnsInfo from './components/common/ColumnsInfo';
 import ColumnsAndIndexInfo from './components/common/ColumnAndIndexInfo'
 let CompanyNamesWorker = new WebWorker(UniqueCompanyNamesWorker);
 let DatesWorker = new WebWorker(UniqueDatesWorker);
+let ResultantDataWorker = new WebWorker(ResultantData);
 
 export const LabelsInfo = React.createContext(null);
 
@@ -42,6 +44,11 @@ function App() {
   const [uniqueColumnsInfo, setUniqueColumnsInfo] = useState({});
   const [repeatingColumnInfo, setRepeatingColumnInfo] = useState({});
   const [dateColumnInfo, setDateColumnInfo] = useState({});
+  const [uniqueColumnsValues, setUniqueColumnsValues] = useState({});
+  const [uniqueDateValues, setUniqueDateValues] = useState({});
+  const [resultantLabel, setResultantLabel] = useState([]);
+  const [resultantData, setResultantData] = useState([]);
+  const [resultantLabelWithIndexes, setResultantLabelWithIndexes] = useState({});
   // const [columnFilter, setColumnFilter] = useState('');
   // const filterByIndex = 7;
   // useEffect(() => {
@@ -87,15 +94,101 @@ function App() {
       console.log('CompanyNamesWorker going to render');
       CompanyNamesWorker.postMessage({ excelData: convertedData.slice(1), uniqueDataObj: uniqueColumnsInfo});
       CompanyNamesWorker.onmessage = function (event) {
-          console.log('Message received from worker CompanyNamesWorker -> '+ event.data);
+          if(event.data && event.data.result && Object.keys(event.data.result).length) {
+            setUniqueColumnsValues(event.data.result.uniqueObj);
+            // console.log('--event.data.result-- -> ', event.data.result);
+            CompanyNamesWorker.terminate();
+          }
       }
       console.log('DatesWorker going to render');
       DatesWorker.postMessage({ excelData: convertedData.slice(1), dateObj: dateColumnInfo });
       DatesWorker.onmessage = function (event) {
-          console.log('Message received from worker -> '+ event.data);
+          if(event.data && event.data.result && Object.keys(event.data.result).length) {
+            if(Object.keys(event.data.result?.dateUniqueObj).length) setUniqueDateValues(event.data.result?.dateUniqueObj);
+            console.log('--event data result-- -> ', event.data.result);
+            DatesWorker.terminate();
+          }
       }
+      // console.log('--companyNamesData-- -> ');
     }
   },[convertedData, uniqueColumnsInfo, dateColumnInfo])
+  useEffect(() => {
+    if(uniqueColumnsValues && Object.keys(uniqueColumnsValues).length && 
+      uniqueDateValues && Object.keys(uniqueDateValues).length) {
+        let labelData = [];
+        const dateLabel = Object.keys(uniqueDateValues)[0];
+        const datesArr = Object.values(uniqueDateValues[dateLabel]);
+        const companyLabel = Object.keys(uniqueColumnsValues)[0];
+        // const companiesArr = Object.values(uniqueColumnsValues[companyLabel]);
+        const companiesArr = uniqueColumnsValues[companyLabel];
+        const dateIndex = dateColumnInfo[Object.keys(dateColumnInfo)[0]];
+        // const companyNameIndex
+        // for(const key in uniqueColumnsInfo)
+        const firstElem = ["S.no", ...Object.keys(uniqueColumnsInfo), ...datesArr];
+        setResultantLabel(firstElem);
+        const resultantLabelIndices = {}
+        for(let i = 0;i < firstElem.length;i++) {
+          resultantLabelIndices[firstElem[i]] = i;
+        }
+        setResultantLabelWithIndexes(resultantLabelIndices);
+        // labelData = [firstElem]
+        // Object.values(uniqueDateValues[Object.keys(uniqueDateValues)[0]])
+        // console.log('--companiesArr-- -> ', companiesArr)
+        // for(const company in uniqueColumnsInfo) {
+        //   // console.log('--uniqueColumnsInfo-- -> ', uniqueColumnsInfo, typeof uniqueColumnsInfo[company], typeof uniqueColumnsInfo[company] + 1)
+        //   for(let i = 0;i < companiesArr.length;i++) {
+        //     let elem = new Array(firstElem.length).fill('');
+        //     elem[0] = i + 1;
+        //     elem[Number(uniqueColumnsInfo[company])+1] = companiesArr[i];
+        //     labelData.push(elem)
+        //   }
+        // } 
+        // console.log('--labelData-- -> ', labelData);
+    }
+  },[uniqueColumnsValues, uniqueDateValues])
+  useEffect(()=> {
+    if(repeatingColumnInfo && Object.keys(repeatingColumnInfo).length && uniqueColumnsValues &&
+      Object.keys(uniqueColumnsValues).length && uniqueDateValues && Object.keys(uniqueDateValues).length &&
+      convertedData && convertedData.length > 0 && resultantLabel && resultantLabel.length &&
+      resultantLabelWithIndexes && Object.keys(resultantLabelWithIndexes).length
+    ) {
+      // ResultantDataWorker.postMessage({ excelData: convertedData.slice(1), uniqueDataObj: uniqueColumnsInfo});
+      // ResultantDataWorker.onmessage = function (event) {
+      //     if(event.data && event.data.result && Object.keys(event.data.result).length) {
+      //       setUniqueColumnsValues(event.data.result);
+      //       ResultantDataWorker.terminate();
+      //     }
+      // }
+      // const result = []
+      const repeatingDataLabel = Object.keys(repeatingColumnInfo)[0];
+      const repeatingDataIndex = repeatingColumnInfo[repeatingDataLabel];
+      const dateColumnIndex = dateColumnInfo[Object.keys(dateColumnInfo)[0]];
+      const companyNameIndex = uniqueColumnsInfo[Object.keys(uniqueColumnsInfo)[0]];
+      let obj = {}
+      let lastCompanyIndex = 0;
+      for(const item of convertedData) {
+        // console.log('--repeatingDataLabel-- -> ', repeatingDataLabel, repeatingDataIndex, dateColumnIndex, companyNameIndex, resultantLabelWithIndexes, obj, item[companyNameIndex+1], item)
+        if(!obj[item[Number(companyNameIndex)]] && item[Number(companyNameIndex)]) {  // remove + 1 if S.No is already present in elements of arr
+          lastCompanyIndex++;
+          obj[item[Number(companyNameIndex)]] = new Array(resultantLabel.length).fill('');
+          obj[item[Number(companyNameIndex)]][0] = lastCompanyIndex;
+          obj[item[Number(companyNameIndex)]][1] = item[Number(companyNameIndex)];
+          const itemDateValue = item[dateColumnIndex];
+          obj[item[Number(companyNameIndex)]][resultantLabelWithIndexes[itemDateValue]] = item[Number(repeatingDataIndex)];
+          // console.log('--item[dateColumnIndex]-- -> ', obj, item, dateColumnIndex, itemDateValue, item[dateColumnIndex], resultantLabelWithIndexes, resultantLabelWithIndexes[itemDateValue], labelData, item[Number(companyNameIndex)], item[Number(repeatingDataIndex)]);
+        } else {
+          const itemDateValue = item[dateColumnIndex];
+          // console.log('--itemDateValue-- -> ', Number(companyNameIndex), item[Number(companyNameIndex)], resultantLabelWithIndexes[itemDateValue], obj[item[Number(companyNameIndex)]], item[Number(repeatingDataIndex)])
+          if(item[Number(companyNameIndex)] && resultantLabelWithIndexes[itemDateValue]) {
+            obj[item[Number(companyNameIndex)]][resultantLabelWithIndexes[itemDateValue]] = item[Number(repeatingDataIndex)];
+          }
+        }
+      }
+      let withoutLabelData = Object.values(obj).sort((a, b) => a[0] > b[0] ? 1 : -1);
+      const mainResultantData = [resultantLabel, ...withoutLabelData]
+      console.log('--obj-- -> ', obj, resultantLabel, withoutLabelData, mainResultantData);
+    }
+  },[repeatingColumnInfo, resultantLabel, uniqueColumnsValues, uniqueDateValues, convertedData, uniqueColumnsInfo, resultantLabelWithIndexes])
   useEffect(() => {
     const fieldsData = [...labelData];
     // const valuesData = [...jsonData];
@@ -201,6 +294,12 @@ function App() {
   // console.log('--dataToBeExported-- -> ', dataToBeExported, selectedTags, dataToBeFiltered, fieldstoBeExported);
   // console.log('--dataToBeFiltered-- -> ', dataToBeFiltered, selectedTags, labelData, fieldstoBeExported, dataToBeExported);
   // console.log('--convertedData-- -> ', convertedData, uniqueColumnsInfo, dateColumnInfo, repeatingColumnInfo);
+  // console.log('--uniqueColumnsValues-- -> ', uniqueColumnsValues, uniqueDateValues, uniqueColumnsInfo, 
+  //   Object.values(uniqueDateValues), 
+  //   Object.keys(uniqueDateValues)[0] && Object.values(uniqueDateValues[Object.keys(uniqueDateValues)[0]]),
+  //   Object.keys(uniqueColumnsValues)[0] && Object.values(uniqueColumnsValues[Object.keys(uniqueColumnsValues)[0]]),
+  //   Object.keys(dateColumnInfo)[0] && dateColumnInfo[Object.keys(dateColumnInfo)[0]]
+  // );
   return (
     <LabelsInfo.Provider value={{setDataToBeFiltered, labelData, dataToBeFiltered, setIsLoading, selectedTags, setSelectedTags}}>
       <div className="App">
@@ -221,7 +320,7 @@ function App() {
                   <InputField
                     type="file"
                     name="json-file"
-                    accept=".csv"
+                    accept=".csv,.xlsx"
                     id="json-file"
                     handleChange={handleChange}
                     inputStyle={{ border: 'none', paddingLeft: 0, paddingRight: 0, width: 'auto' }}

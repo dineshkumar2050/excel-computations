@@ -10,7 +10,7 @@ function ColumnsInfo({ title, labelText, labelClassName, labelsData, labelSetter
     const indexOfCurrentSelectedValue = labelsData.indexOf(currentSelectedValue);
     const currentData = { ...labelObjValue }
     if(!currentData[currentSelectedValue] || !currentData[currentSelectedValue] === -1) {
-      currentData[currentSelectedValue] = indexOfCurrentSelectedValue
+      currentData[currentSelectedValue] = String(indexOfCurrentSelectedValue)
       labelSetter({
         ...currentData,
       })
