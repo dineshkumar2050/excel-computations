@@ -49,6 +49,22 @@ function App() {
   const [resultantLabel, setResultantLabel] = useState([]);
   const [resultantData, setResultantData] = useState([]);
   const [resultantLabelWithIndexes, setResultantLabelWithIndexes] = useState({});
+  // const [allCompanyNamesWithData, setAllCompanyNamesWithData] = useState({});
+  // useEffect(() => {
+  //   // convert converted data into unique data by company names
+  //   if(convertedData && convertedData.length > 0 && Object.keys(uniqueColumnsInfo).length && 
+  //     Object.keys(dateColumnInfo).length && Object.keys(repeatingColumnInfo).length) {
+  //     console.log('CompanyNamesWorker going to render');
+  //     CompanyNamesWorker.postMessage({ excelData: convertedData.slice(1), uniqueDataObj: uniqueColumnsInfo});
+  //     CompanyNamesWorker.onmessage = function (event) {
+  //         if(event.data && event.data.result && Object.keys(event.data.result).length) {
+  //           setUniqueColumnsValues(event.data.result.uniqueObj);
+  //           // console.log('--event.data.result-- -> ', event.data.result);
+  //           CompanyNamesWorker.terminate();
+  //         }
+  //     }
+  //   }
+  // }, [uniqueColumnsInfo, repeatingColumnInfo, dateColumnInfo, convertedData]);
   // const [columnFilter, setColumnFilter] = useState('');
   // const filterByIndex = 7;
   // useEffect(() => {

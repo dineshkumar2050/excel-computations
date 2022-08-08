@@ -236,7 +236,7 @@ function NewApp() {
                 !!showFilterData &&
                 <Filter 
                   labelData={fieldstoBeExported}
-                  jsonData={dataToBeExported.slice(1)}
+                  jsonData={dataToBeExported.slice(1).length > 10 ? dataToBeExported.slice(1).slice(0, 10) : dataToBeExported.slice(1)}
                   tableClass={'table-data'}            
                 />
               }
@@ -248,7 +248,7 @@ function NewApp() {
                 setJsonData={setJsonData}
                 setLabelData={setLabelData}
                 labelData={labelData}
-                jsonData={jsonData}
+                jsonData={jsonData.slice(0, 10)}
               />
             </div>
           </div>
