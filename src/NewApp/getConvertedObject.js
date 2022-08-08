@@ -7,16 +7,14 @@ export default () => {
           let dateUniqueObj = {};
           let companyLabelIndex = Number(uniqueDataObj[(Object.keys(uniqueDataObj)[0])]);
           let dateLabelIndex = Number(dateColumnObj[(Object.keys(dateColumnObj)[0])]);
-          arr.map((item, index) => {
+          arr.map((item) => {
             if(!resultantObj[item[companyLabelIndex]] && item[companyLabelIndex]) {
                 resultantObj[item[companyLabelIndex]] = {}
             }
-            // console.log('--item[companyLabelIndex]-- -> ', resultantObj[item[companyLabelIndex]][item[dateLabelIndex]])
             if(item && item[dateLabelIndex] && item[companyLabelIndex] && resultantObj[item[companyLabelIndex]] && !resultantObj[item[companyLabelIndex]][item[dateLabelIndex]]) {
                 resultantObj[item[companyLabelIndex]][item[dateLabelIndex]] = item;
             }
-            if(dateUniqueObj && !dateUniqueObj[`${item[dateLabelIndex]}`] && item[dateLabelIndex]) {
-                // console.log('--dateObj dateUniqueObj dateLabelIndex-- -> ', dateObj, dateUniqueObj, dateLabelIndex, dateTitle, dateUniqueObj, dateUniqueObj[`${item[dateLabelIndex]}`],item[dateLabelIndex]);
+            if(item && dateUniqueObj && !dateUniqueObj[`${item[dateLabelIndex]}`] && item[dateLabelIndex]) {
                 dateUniqueObj[`${item[dateLabelIndex]}`] = item[dateLabelIndex];
             }
           })
@@ -25,7 +23,7 @@ export default () => {
         const result = getResultantData(event.data.excelData, event.data.uniqueDataObj, event.data.dateColumnObj);
         const t1 = performance.now();
         const diff = Math.round(t1 - t0);
-        console.log("::Start Calculation for company names:: ", t0, t1, result);
+        console.log("::Start Calculation for unique date obj:: ", t0, t1, diff/1000);
         postMessage({ result, timeTaken: diff });
     }
 }

@@ -22,7 +22,7 @@ export default () => {
         const result = getResultantData(event.data);
         const t1 = performance.now();
         const diff = Math.round(t1 - t0);
-        console.log("::Start Calculation for company names:: ", t0, t1, result);
+        console.log("::Start Calculation for resultant converted dta:: ", t0, t1);
         postMessage({ result, timeTaken: diff });
     }
 }
